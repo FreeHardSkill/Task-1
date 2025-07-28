@@ -1,35 +1,110 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Util;
 
+
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
-public class UserDaoJDBCImpl implements UserDao {
-    public UserDaoJDBCImpl() {
 
-    }
+public class UserDaoJDBCImpl implements UserDao {
+
+    private static final UserDaoJDBCImpl INSTANCE = new UserDaoJDBCImpl();
 
     public void createUsersTable() {
-
+        try(Connection connection = Util.open()) {
+            String query = """
+                    CREATE TABLE IF NOT EXISTS "users" (
+                            id SERIAL PRIMARY KEY,  name varchar(32), last_name varchar(32), age integer)
+                    """;
+            Statement statement = connection.createStatement();
+            statement.execute(query);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void dropUsersTable() {
-
+        try(Connection connection = Util.open()) {
+            String query = """
+                        DROP TABLE IF EXISTS "users";
+                    """;
+            Statement statement = connection.createStatement();
+            statement.execute(query);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void saveUser(String name, String lastName, byte age) {
-
+        try(Connection connection = Util.open()) {
+            String query = """
+                    INSERT INTO "users" (name,last_name,age) VALUES (?,?,?)
+                    """;
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1,name);
+            statement.setString(2,lastName);
+            statement.setByte(3,age);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void removeUserById(long id) {
+        try(Connection connection = Util.open()) {
+            String query = """
+                    DELETE FROM "users" WHERE id = ?
+                    """;
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setLong(1,id);
+            statement.executeUpdate();
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<User> getAllUsers() {
+        try(Connection connection = Util.open()) {
+            String query = """
+                    SELECT * FROM "users"
+                    """;
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            List<User> users = new ArrayList<>();
+            while(rs.next()) {
+                User user = new User(rs.getString("name"),rs.getString("last_name"),rs.getByte("age"));
+                user.setId(rs.getLong("id"));
+                users.add(user);
+
+            }
+            return users;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     public void cleanUsersTable() {
+        try(Connection connection = Util.open()) {
+            String query = """
+                    TRUNCATE TABLE "users"
+                    """;
+            Statement statement = connection.createStatement();
+            statement.execute(query);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private UserDaoJDBCImpl() {
+
+    }
+
+    public static UserDaoJDBCImpl getInstance() {
+        return INSTANCE;
     }
 }
