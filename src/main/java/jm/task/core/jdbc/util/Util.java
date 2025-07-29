@@ -12,10 +12,12 @@ public class Util {
 
 
     public static Connection open() {
+        Connection connection = null;
         try {
-            return DriverManager.getConnection(url, username, password);
+            connection = DriverManager.getConnection(url, username, password);
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка подключения к БД");
+            e.printStackTrace();
         }
+        return connection;
     }
 }
